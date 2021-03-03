@@ -1,3 +1,7 @@
-# CSS432Game
- 
-This is an implementation of tic-tac-toe using unity and implementing online multiplayer using c# sockets.
+# Tic-Tac-Toe Online
+CSS 432 Final Project
+
+Created by Team Networkers: Jorge Alvarez, Nathan Ngo, and Johnny Pham
+
+## Description
+This is an implementation of Tic-Tac-Toe using Unity and implementing online multiplayer using C# sockets.
