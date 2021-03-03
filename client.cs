@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 public class GetSocket
 {
-    private string host = "localhost";
+    private string host = "localhost"; // needs to be server ip address
     private int port = 4183;
 
     // This method requests the home page content for the specified server.
@@ -48,6 +48,12 @@ public class GetSocket
 
     public static void Main(string[] args)
     {
+        cout << "Input Host Name:" << endl;
+        cin >> host;
+
+        cout << "Input Game Number:" << endl;
+        cin >> port;
+
         Socket s = null;
         IPHostEntry hostEntry = null;
 
@@ -81,8 +87,9 @@ public class GetSocket
 
         //send the first request to the host to retrieve board information
         string result = SocketSendReceive(s, playerBoard);
-
-        while(/*game is running*/)
+        
+        //game is running
+        while(true)
         {
             //generate the new board on return
             for(int i = 0; i < result.Length; i++)
@@ -97,7 +104,13 @@ public class GetSocket
 
             //display the new board
             Console.WriteLine(result);
+            if(/*game over*/);
+            {
+                cout << "Game Over" << endl;
+                break;
+            }
         }
 
+        s.Close();
     }
 }
