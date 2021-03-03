@@ -104,7 +104,7 @@ public class GetSocket
 
             //display the new board
             Console.WriteLine(result);
-            if(/*game over*/);
+            if(/*game over*/)
             {
                 cout << "Game Over" << endl;
                 break;

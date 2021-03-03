@@ -89,16 +89,25 @@ public class MenuController : MonoBehaviour
         JoiningRoomCanvas.SetActive(false);
         GamePlayCanvas.SetActive(false);
     }
-
     // This is basically like the Back button but we need to close the client and server 
     // before going back to the main menu. 
-    public void ExitButtonClicked()
+    public void ExitPlayingButtonClicked()
     {
         //TODO:
         // If the player exits in the middle of the game
         // Set the player to lose, the opponent wins.
 
         //If the the result has been set, skip to this part.
+        MainMenuCanvas.SetActive(true);
+        CreatingRoomCanvas.SetActive(false);
+        WaitingCanvas.SetActive(false);
+        JoiningRoomCanvas.SetActive(false);
+        GamePlayCanvas.SetActive(false);
+    }
+
+    // goes back to main menu after a win,lose,or draw game
+    public void ExitButtonClicked()
+    {
         MainMenuCanvas.SetActive(true);
         CreatingRoomCanvas.SetActive(false);
         WaitingCanvas.SetActive(false);
@@ -130,6 +139,20 @@ public class MenuController : MonoBehaviour
         //Create the client information
 
         //Establish the connection between the client and the server
+    }
+
+    // called after a game is set to win, lose, or draw.
+    public void ContinueButtonClicked()
+    {
+        // turn off these annoucement menus
+        WinCanvas.SetActive(false);
+        LoseCanvas.SetActive(false);
+        DrawCanvas.SetActive(false);
+
+        // TODO:
+        // keep the connection between the client and the server 
+        // and create a new game board.
+
     }
 
     #endregion
