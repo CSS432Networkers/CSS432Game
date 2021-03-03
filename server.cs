@@ -8,11 +8,14 @@ namespace Server {
 class Program { 
   
 private string host = "localhost"; // needs to be local ip address
-private int port = 4183;    //needs to be randomly generated
+private int port = 0;    //needs to be randomly generated
 
 // Main Method 
 static void Main(string[] args) 
 { 
+
+    Random rand = new Random();
+    port = Random.Next(1,1000) + 1024;
 
     // Establish the local endpoint  
     // for the socket. Dns.GetHostName 
@@ -22,6 +25,12 @@ static void Main(string[] args)
     IPAddress ipAddr = ipHost.AddressList[0]; 
     IPEndPoint localEndPoint = new IPEndPoint(ipAddr, port); 
   
+    //maybe print out the host name and port so that client side can connect to server?
+    //have no idea how we'd create the connection on client side without providing both
+    //server name and port number.
+    //---------------cout << "Host: " << Dns.GetHostName() << endl;---------------
+    //---------------cout << "Game Number: " << port << endl;---------------
+
     // Creation TCP/IP Socket using  
     // Socket Class Costructor 
     Socket listener = new Socket(ipAddr.AddressFamily, 
