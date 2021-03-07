@@ -5,15 +5,28 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public Text[] buttonList;
+
+    void Awake()
     {
-        
+        SetGameControllerReferenceOnButtons();
     }
 
-    // Update is called once per frame
-    void Update()
+    public void SetGameControllerReferenceOnButtons()
     {
-        
+        for (int i = 0; i < buttonList.Length; i++)
+        {
+            buttonList[i].GetComponentInParent<GridSpace>().SetGameControllerReference(this);
+        }
+    }
+
+    public string GetPlayerSide()
+    {
+        return "?";
+    }
+
+    public void EndTurn()
+    {
+        Debug.Log("EndTurn is not implemented!");
     }
 }
