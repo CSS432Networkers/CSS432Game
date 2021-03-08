@@ -5,10 +5,11 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
-    [SerializeField] private GameObject WinCanvas;
-    [SerializeField] private GameObject LoseCanvas;
-    [SerializeField] private GameObject DrawCanvas;
-
+    //[SerializeField] private GameObject WinCanvas;
+    //[SerializeField] private GameObject LoseCanvas;
+    //[SerializeField] private GameObject DrawCanvas;
+    public GameObject gameOverPanel;
+    public Text gameOverText;
 
     public Text[] buttonList;
     private string playerSide;
@@ -16,13 +17,14 @@ public class GameController : MonoBehaviour
     void Awake ()
     {
         SetGameControllerReferenceOnButtons();
-        WinCanvas.SetActive(false);
-        LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false);
+        //WinCanvas.SetActive(false);
+        //LoseCanvas.SetActive(false);
+        //DrawCanvas.SetActive(false);
+        gameOverPanel.SetActive(false);
         moveCount = 0;
         playerSide = "X";
-
     }
+
     //get the text array of the board 
     void SetGameControllerReferenceOnButtons ()
     {
@@ -89,20 +91,29 @@ public class GameController : MonoBehaviour
         //Checks for draw
         if (moveCount >= 9)
         {
-            DrawCanvas.SetActive(true);
+            //DrawCanvas.SetActive(true);
+            SetGameOverText("It's a draw!");
         }
 
 
         ChangeSides();
     }
 
-    void GameOver () 
+    void GameOver() 
     {
         //Disable clicking
         for (int i = 0; i < buttonList.Length; i++)
         {
             buttonList[i].GetComponentInParent<Button>().interactable = false;
         }
+        gameOverPanel.SetActive(true);
+        gameOverText.text = playerSide + " Wins!";
+    }
+
+    void SetGameOverText(string value)
+    {
+        gameOverPanel.SetActive(true);
+        gameOverText.text = value;
     }
 
     //This method is called after the player made a move.
@@ -119,9 +130,9 @@ public class GameController : MonoBehaviour
 
         moveCount = 0;
 
-        WinCanvas.SetActive(false);
-        LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false);
+        //WinCanvas.SetActive(false);
+        //LoseCanvas.SetActive(false);
+        //DrawCanvas.SetActive(false);
 
         SetBoardInteractable(true);
 
