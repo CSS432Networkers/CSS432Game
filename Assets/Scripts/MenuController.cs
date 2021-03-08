@@ -21,6 +21,16 @@ public class MenuController : MonoBehaviour
 
     void Start() 
     {
+        MainMenuCanvas.SetActive(false);
+        CreatingRoomCanvas.SetActive(false);
+        WaitingCanvas.SetActive(false);
+        JoiningRoomCanvas.SetActive(false);
+        GamePlayCanvas.SetActive(true);
+        WinCanvas.SetActive(false);
+        LoseCanvas.SetActive(false);
+        DrawCanvas.SetActive(false);
+
+        /* This is how the game should do after implementing the client and the server
         MainMenuCanvas.SetActive(true);
         CreatingRoomCanvas.SetActive(false);
         WaitingCanvas.SetActive(false);
@@ -28,7 +38,7 @@ public class MenuController : MonoBehaviour
         GamePlayCanvas.SetActive(false);
         WinCanvas.SetActive(false);
         LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false);
+        DrawCanvas.SetActive(false); */
     }
 
     //Contains methods in the main menu
@@ -38,8 +48,9 @@ public class MenuController : MonoBehaviour
         MainMenuCanvas.SetActive(false);
         CreatingRoomCanvas.SetActive(true);
         WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
+        JoiningRoomCanvas.SetActive(false);  
         GamePlayCanvas.SetActive(false);
+
     }
     public void JoinRoomButtonClicked()
     {
@@ -141,19 +152,6 @@ public class MenuController : MonoBehaviour
         //Establish the connection between the client and the server
     }
 
-    // called after a game is set to win, lose, or draw.
-    public void ContinueButtonClicked()
-    {
-        // turn off these annoucement menus
-        WinCanvas.SetActive(false);
-        LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false);
-
-        // TODO:
-        // keep the connection between the client and the server 
-        // and create a new game board.
-
-    }
 
     #endregion
 
