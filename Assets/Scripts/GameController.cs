@@ -10,10 +10,12 @@ public class GameController : MonoBehaviour
     //[SerializeField] private GameObject DrawCanvas;
     public GameObject gameOverPanel;
     public Text gameOverText;
+    public GameObject restartButton;
 
     public Text[] buttonList;
     private string playerSide;
     private int moveCount;
+
     void Awake ()
     {
         SetGameControllerReferenceOnButtons();
@@ -21,6 +23,7 @@ public class GameController : MonoBehaviour
         //LoseCanvas.SetActive(false);
         //DrawCanvas.SetActive(false);
         gameOverPanel.SetActive(false);
+        restartButton.SetActive(false);
         moveCount = 0;
         playerSide = "X";
     }
@@ -50,64 +53,72 @@ public class GameController : MonoBehaviour
         //First row
         if (buttonList [1].text == playerSide && buttonList [2].text == playerSide && buttonList [3].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //Second row
         if (buttonList [4].text == playerSide && buttonList [5].text == playerSide && buttonList [0].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //Thrid row
         if (buttonList [6].text == playerSide && buttonList [7].text == playerSide && buttonList [8].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //First col
         if (buttonList [1].text == playerSide && buttonList [4].text == playerSide && buttonList [6].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //Second col
         if (buttonList [2].text == playerSide && buttonList [7].text == playerSide && buttonList [0].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //Third col
         if (buttonList [3].text == playerSide && buttonList [5].text == playerSide && buttonList [8].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //x
         if (buttonList [1].text == playerSide && buttonList [0].text == playerSide && buttonList [8].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
         //x2
         if (buttonList [3].text == playerSide && buttonList [0].text == playerSide && buttonList [6].text == playerSide)
         {
-            GameOver();
+            GameOver(playerSide);
         }
 
         //Checks for draw
         if (moveCount >= 9)
         {
             //DrawCanvas.SetActive(true);
-            SetGameOverText("It's a draw!");
+            GameOver("draw");
         }
 
 
         ChangeSides();
     }
 
-    void GameOver() 
+    void GameOver(string winningPlayer) 
     {
         //Disable clicking
         for (int i = 0; i < buttonList.Length; i++)
         {
             buttonList[i].GetComponentInParent<Button>().interactable = false;
         }
+        if (winningPlayer == "draw")
+        {
+            SetGameOverText("It's a Draw!");
+        }
+        else
+        {
+            SetGameOverText(winningPlayer + " Wins!");
+        }
         gameOverPanel.SetActive(true);
-        gameOverText.text = playerSide + " Wins!";
+        restartButton.SetActive(true);
     }
 
     void SetGameOverText(string value)
@@ -134,8 +145,9 @@ public class GameController : MonoBehaviour
         //LoseCanvas.SetActive(false);
         //DrawCanvas.SetActive(false);
 
+        gameOverPanel.SetActive(false);
+        restartButton.SetActive(false);
         SetBoardInteractable(true);
-
 
         //Clear board. Needs work.
         for (int i = 0; i < buttonList.Length; i++)
