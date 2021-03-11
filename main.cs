@@ -11,16 +11,16 @@ namespace tictactoe_emergency
         static void Main(string[] args)
         {
 
-            Console.WriteLine("Host(h) or player(p)?");
+            Console.WriteLine("Host(1) or Player(2)?");
             string status = Console.ReadLine();
 
             int choice = 3;
 
-            if(status.Equals("h", StringComparison.InvariantCultureIgnoreCase))
+            if(status.Equals("1", StringComparison.InvariantCultureIgnoreCase))
             {
                 choice = 0;
             }
-            else if(status.Equals("p", StringComparison.InvariantCultureIgnoreCase))
+            else if(status.Equals("2", StringComparison.InvariantCultureIgnoreCase))
             {
                 choice = 1;
             }
@@ -30,7 +30,6 @@ namespace tictactoe_emergency
             {
                 Player_Server host = new Player_Server();
                 initBoard();
-                host.Start();
                 hostGame(host);
             }
 
@@ -38,7 +37,6 @@ namespace tictactoe_emergency
             {
                 Player_Client client = new Player_Client();
                 initBoard();
-                client.Start();
                 clientGame(client);
             }
 
@@ -66,6 +64,31 @@ namespace tictactoe_emergency
 
         private static void clientGame(Player_Client client)
         {
+            Console.WriteLine("LAN(1) or Online(2)");
+            string input = Console.ReadLine();
+
+            if (input.Equals("1", StringComparison.InvariantCultureIgnoreCase))
+            {
+                int initStatus = client.startLocal();
+                if(initStatus == -1)
+                {
+                    Console.WriteLine("Bad Port");
+                    clientGame(client);
+                    return;
+                }
+            }
+            else if (input.Equals("2", StringComparison.InvariantCultureIgnoreCase))
+            {
+                int initStatus = client.startRemote();
+                if(initStatus == -1)
+                {
+                    Console.WriteLine("Bad Server name");
+                    clientGame(client);
+                    return;
+                }
+                Console.WriteLine("Waiting for opponent");
+            }
+
             bool game = true;
 
             while (game)
@@ -75,6 +98,12 @@ namespace tictactoe_emergency
 
                 //recieve the board and update the board, recieveBoard freezes user while waiting for return
                 char[] returnBoard = client.recieveBoard();
+                if(returnBoard == null)
+                {
+                    Console.WriteLine("Opponent has quit, ending game");
+                    return;
+                }
+
                 updateBoard(returnBoard);
 
                 char winner = checkWin();
@@ -101,13 +130,38 @@ namespace tictactoe_emergency
                 }
 
                 //send the board
-                client.sendBoard(boardToSend);
+                bool sendStatus = client.sendBoard(boardToSend);
+                if(sendStatus == false)
+                {
+                    Console.WriteLine("Oppenent has quit, closing game");
+                    return;
+                }
 
             }
         }
 
         private static void hostGame(Player_Server host)
         {
+            Console.WriteLine("LAN(1) or Online(2)");
+            string input = Console.ReadLine();
+
+            if(input.Equals("1", StringComparison.InvariantCultureIgnoreCase))
+            {
+                host.startLocal();
+            }
+            else if(input.Equals("2", StringComparison.InvariantCultureIgnoreCase))
+            {
+                int initStatus = host.startRemote();
+                if (initStatus == -1)
+                {
+                    Console.WriteLine("\nBad Server name");
+                    hostGame(host);
+                    return;
+                }
+                Console.WriteLine("Waiting for opponent");
+                Console.WriteLine("Game started");
+            }
+
             bool game = true;
 
             while(game)
@@ -130,16 +184,27 @@ namespace tictactoe_emergency
                 }
 
                 //send the board
-                host.sendBoard(boardToSend);
+                bool sendStatus = host.sendBoard(boardToSend);
+                if (sendStatus == false)
+                {
+                    Console.WriteLine("Oppenent has quit, closing game");
+                    return;
+                }
 
                 //recieve the board and update the board, recieveBoard freezes user while waiting for return
                 char[] returnBoard = host.recieveBoard();
+                if (returnBoard == null)
+                {
+                    Console.WriteLine("Opponent has quit, ending game");
+                    return;
+                }
+
                 updateBoard(returnBoard);
 
                 winner = checkWin();
                 if(winner == 'o')
                 {
-                    Console.WriteLine(createDisplay() + "Opponent Wins\nClosing connection");
+                    Console.WriteLine(createDisplay() + "\nOpponent Wins\nClosing connection");
                     return;
                 }
             }       

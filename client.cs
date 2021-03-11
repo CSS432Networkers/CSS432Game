@@ -19,7 +19,7 @@ public class Player_Client
     private int recNum = 0;
 
     // Start is called before the first frame update
-    public void Start()
+    public int startLocal()
     {
         //asks user for the "game number" which is the port of the server from the host
         Console.WriteLine("Input Game Number: ");
@@ -39,7 +39,14 @@ public class Player_Client
             IPEndPoint ipe = new IPEndPoint(address, port);
             Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
-            tempSocket.Connect(ipe);
+            try
+            {
+                tempSocket.Connect(ipe);
+            }
+            catch (Exception e)
+            {
+                return -1;
+            }
 
             if (tempSocket.Connected)
             {
@@ -52,10 +59,62 @@ public class Player_Client
                 continue;
             }
         }
+        return 0;
+    }
+
+    // Start is called before the first frame update
+    public int startRemote()
+    {
+        Console.WriteLine("Input Server Name: (ex: csslab11.uwb.edu)");
+        string temp = Console.ReadLine();
+
+        IPHostEntry hostEntry = null;
+
+        try
+        {
+            // Get host related information.
+            hostEntry = Dns.GetHostEntry(temp);
+
+        }
+        catch (SocketException e)
+        {
+            //Console.WriteLine("Bad Server Name");
+            return -1;
+        };
+
+        // Loop through the AddressList to obtain the supported AddressFamily. This is to avoid
+        // an exception that occurs when the host IP Address is not compatible with the address family
+        // (typical in the IPv6 case).
+        foreach (IPAddress address in hostEntry.AddressList)
+        {
+            IPEndPoint ipe = new IPEndPoint(address, 4183);
+            Socket tempSocket = new Socket(ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+            try
+            {
+                tempSocket.Connect(ipe);
+            }
+            catch(Exception e)
+            {
+                return -1;
+            }
+
+            if (tempSocket.Connected)
+            {
+                clientSocket = tempSocket;
+                break;
+            }
+
+            else
+            {
+                continue;
+            }
+        }
+        return 0;
     }
 
     //send this board to the remote player and wait for ack, resend if no ack
-    public void sendBoard(char[] board)
+    public bool sendBoard(char[] board)
     {
         char[] convert = new char[11];
 
@@ -80,13 +139,22 @@ public class Player_Client
         //get time of send
         DateTime start = DateTime.UtcNow;
 
+        int retryCount = 0;
+        
         //wait for response
         while (true)
         {
+            Console.WriteLine("Waiting for ack...");
+            retryCount++;
             int numByte = clientSocket.Receive(message);
 
+            if (retryCount == 3)
+            {
+                return false;
+            }
+
             data += Encoding.ASCII.GetString(message, 0, numByte);
-            Console.WriteLine("Waiting for ack...");
+            
             if (data.Length == 11)
                 break;
 
@@ -108,14 +176,21 @@ public class Player_Client
                 break;
             }
         }
-
+        
         char[] recieved = data.ToCharArray();
+
+        if (recieved[0] == 'e')
+        {
+            return false;
+        }
 
         //check if this isnt an ack or its the incorrect one
         if (recieved[0] != 'a' || recieved[1] != sendNum - 1)
         {
             sendBoard(board);
         }
+        return true;
+        
     }
 
     //called to wait and recieve from the remote player
@@ -123,20 +198,40 @@ public class Player_Client
     {
         string data = null;
         byte[] message = new byte[256];
+        int retryCount = 0;
 
+        //bool properData = false;
         //wait for data
         while (true)
         {
             Thread.Sleep(1000);
 
             Console.WriteLine("Waiting for user");
+            retryCount++;
 
             int numByte = clientSocket.Receive(message);
 
             data += Encoding.ASCII.GetString(message,
                                         0, numByte);
 
-            if (data.Length == 11)
+            /*
+            for (int i = 0; i < data.Length; i++)
+            {
+                if (data[i] != '\0')
+                {
+                    properData = true;
+                    break;
+                }
+            }
+            */
+
+            if (retryCount == 3)
+            {
+                return null;
+            }
+
+            //once we've gotten all the data, break
+            if (data.Length == 11)// && properData == true)
                 break;
 
         }
@@ -151,7 +246,7 @@ public class Player_Client
             returnBoard[index] = playerBoard[i];
             index++;
         }
-
+       
         //if message recieved is board
         if (playerBoard[0] == 'b')
         {
@@ -171,13 +266,19 @@ public class Player_Client
                 recNum++;
             }
         }
+
+        if (playerBoard[0] == 'e')
+        {
+            return null;
+        }
+
         else if (playerBoard[0] == 'w')
         {
             
             clientSocket.Close();
             return returnBoard;
         }
-
+        
         return returnBoard;
     }
 
