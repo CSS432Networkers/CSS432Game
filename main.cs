@@ -25,10 +25,9 @@ namespace tictactoe_emergency
                 choice = 1;
             }
 
-
             if(choice == 0)
             {
-                Player_Server host = new Player_Server();
+                Player_Client host = new Player_Client();
                 initBoard();
                 hostGame(host);
             }
@@ -69,23 +68,52 @@ namespace tictactoe_emergency
 
             if (input.Equals("1", StringComparison.InvariantCultureIgnoreCase))
             {
-                int initStatus = client.startLocal();
-                if(initStatus == -1)
+                int initStatus = -1;
+                bool retry = false;
+
+                while(initStatus == -1)
                 {
-                    Console.WriteLine("Bad Port");
-                    clientGame(client);
-                    return;
+                    if(retry == true)
+                    {
+                        Console.WriteLine("Bad Port");
+                    }
+
+                    initStatus = client.startLocal();
+                    if (initStatus == 0)
+                    {
+                        break;
+                    }
+                    retry = true;
                 }
             }
             else if (input.Equals("2", StringComparison.InvariantCultureIgnoreCase))
             {
-                int initStatus = client.startRemote();
-                if(initStatus == -1)
+                int initStatus = -1;
+                bool retry = false;
+
+                //while the server name is bad
+                while(initStatus == -1)
                 {
-                    Console.WriteLine("Bad Server name");
-                    clientGame(client);
-                    return;
+                    //print bad server name if we've retried atleast once
+                    if(retry == true)
+                    {
+                        Console.WriteLine("Bad Server Name");
+                    }
+
+                    //take server name input
+                    Console.WriteLine("Input Server Name: (ex: csslab11.uwb.edu)");
+                    string temp = Console.ReadLine();
+
+                    //if the status is successful, break
+                    initStatus = client.startRemote(temp);
+                    if (initStatus == 0)
+                    {
+                        break;
+                    }
+
+                    retry = true;
                 }
+
                 Console.WriteLine("Waiting for opponent");
             }
 
@@ -113,6 +141,12 @@ namespace tictactoe_emergency
                     return;
                 }
 
+                if (winner == 'd')
+                {
+                    Console.WriteLine(createDisplay() + "\nDraw");
+                    return;
+                }
+
                 //take user input for position they wanna fill
                 int check = displayBoard();
 
@@ -129,37 +163,61 @@ namespace tictactoe_emergency
                     return;
                 }
 
+                if (winner == 'd')
+                {
+                    client.sendDraw(boardToSend);
+                    Console.WriteLine(createDisplay() + "\nDraw");
+                    return;
+                }
+
                 //send the board
                 bool sendStatus = client.sendBoard(boardToSend);
                 if(sendStatus == false)
                 {
-                    Console.WriteLine("Oppenent has quit, closing game");
+                    Console.WriteLine("\nOppenent has quit, closing game");
                     return;
                 }
 
             }
         }
 
-        private static void hostGame(Player_Server host)
+        private static void hostGame(Player_Client host)
         {
             Console.WriteLine("LAN(1) or Online(2)");
             string input = Console.ReadLine();
 
             if(input.Equals("1", StringComparison.InvariantCultureIgnoreCase))
             {
-                host.startLocal();
+                host.hostLocal();
             }
             else if(input.Equals("2", StringComparison.InvariantCultureIgnoreCase))
             {
-                int initStatus = host.startRemote();
-                if (initStatus == -1)
+                int initStatus = -1;
+                bool retry = false;
+
+                //while the server name is bad
+                while (initStatus == -1)
                 {
-                    Console.WriteLine("\nBad Server name");
-                    hostGame(host);
-                    return;
+                    //print bad server name if we've retried atleast once
+                    if (retry == true)
+                    {
+                        Console.WriteLine("Bad Server Name");
+                    }
+
+                    //take server name input
+                    Console.WriteLine("Input Server Name: (ex: csslab11.uwb.edu)");
+                    string temp = Console.ReadLine();
+
+                    //if the status is successful, break
+                    initStatus = host.startRemote(temp);
+                    if (initStatus == 0)
+                    {
+                        Console.WriteLine("Game Started");
+                        break;
+                    }
+
+                    retry = true;
                 }
-                Console.WriteLine("Waiting for opponent");
-                Console.WriteLine("Game started");
             }
 
             bool game = true;
@@ -179,7 +237,14 @@ namespace tictactoe_emergency
                 if (winner == 'x')
                 {
                     host.sendWin(boardToSend);
-                    Console.WriteLine(createDisplay() + "You Win!");
+                    Console.WriteLine(createDisplay() + "\nYou Win!");
+                    return;
+                }
+                
+                if(winner == 'd')
+                {
+                    host.sendDraw(boardToSend);
+                    Console.WriteLine(createDisplay() + "\nDraw");
                     return;
                 }
 
@@ -187,7 +252,7 @@ namespace tictactoe_emergency
                 bool sendStatus = host.sendBoard(boardToSend);
                 if (sendStatus == false)
                 {
-                    Console.WriteLine("Oppenent has quit, closing game");
+                    Console.WriteLine("\nOppenent has quit, closing game");
                     return;
                 }
 
@@ -195,7 +260,7 @@ namespace tictactoe_emergency
                 char[] returnBoard = host.recieveBoard();
                 if (returnBoard == null)
                 {
-                    Console.WriteLine("Opponent has quit, ending game");
+                    Console.WriteLine("\nOpponent has quit, ending game");
                     return;
                 }
 
@@ -205,6 +270,12 @@ namespace tictactoe_emergency
                 if(winner == 'o')
                 {
                     Console.WriteLine(createDisplay() + "\nOpponent Wins\nClosing connection");
+                    return;
+                }
+
+                if (winner == 'd')
+                {
+                    Console.WriteLine(createDisplay() + "\nDraw");
                     return;
                 }
             }       
@@ -219,6 +290,12 @@ namespace tictactoe_emergency
                 for (int j = 0; j < 3; j++)
                 {
                     board[i, j] = retBoard[index];
+
+                    if(retBoard[index] == 'x' || retBoard[index] == 'o')
+                    {
+                        freeSpots[index] = false;
+                    }
+
                     index++;
                 }
             }
@@ -239,11 +316,13 @@ namespace tictactoe_emergency
                         {
                             boardToSend[index] = 'x';
                             board[i, j] = 'x';
+
                         }
                         else if(type.Equals("client"))
                         {
                             boardToSend[index] = 'o';
                             board[i, j] = 'o';
+
                         }
                         
                     }
@@ -302,6 +381,11 @@ namespace tictactoe_emergency
             //take user input and check if it is an int
             if (Int32.TryParse(given, out int givenInt))
             {
+                if((givenInt - 1) > 8)
+                {
+                    Console.WriteLine("Bad input");
+                    return displayBoard();         
+                }
                 //if this position is a legal position, return it and update freespots
                 if(isAllowed(givenInt -1))
                 {
@@ -357,14 +441,16 @@ namespace tictactoe_emergency
                     return x;
                 }
             }
-            else if(board[0,1] == x)
+
+            if(board[0,1] == x)
             {
                 if (board[1, 1] == x && board[2, 1] == x)
                 {
                     return x;
                 }
             }
-            else if (board[0, 2] == x)
+
+            if (board[0, 2] == x)
             {
                 if (board[1, 1] == x && board[2, 0] == x)
                 {
@@ -375,14 +461,16 @@ namespace tictactoe_emergency
                     return x;
                 }
             }
-            else if(board[1,0] == x)
+
+            if(board[1,0] == x)
             {
                 if(board[1,1] == x && board[1,2] == x)
                 {
                     return x;
                 }
             }
-            else if (board[2, 0] == x)
+
+            if (board[2, 0] == x)
             {
                 if (board[2, 1] == x && board[2, 2] == x)
                 {
@@ -405,14 +493,14 @@ namespace tictactoe_emergency
                     return o;
                 }
             }
-            else if (board[0, 1] == o)
+            if (board[0, 1] == o)
             {
                 if (board[1, 1] == o && board[2, 1] == o)
                 {
                     return o;
                 }
             }
-            else if (board[0, 2] == o)
+            if (board[0, 2] == o)
             {
                 if (board[1, 1] == o && board[2, 0] == o)
                 {
@@ -423,19 +511,34 @@ namespace tictactoe_emergency
                     return o;
                 }
             }
-            else if (board[1, 0] == o)
+            if (board[1, 0] == o)
             {
                 if (board[1, 1] == o && board[1, 2] == o)
                 {
                     return o;
                 }
             }
-            else if (board[2, 0] == o)
+            if (board[2, 0] == o)
             {
                 if (board[2, 1] == o && board[2, 2] == o)
                 {
                     return o;
                 }
+            }
+
+            int fullCount = 0;
+
+            for (int i = 0; i < freeSpots.Length; i++)
+            {
+                if (freeSpots[i] == false)
+                {
+                    fullCount++;
+                }
+            }
+
+            if (fullCount == 9)
+            {
+                return 'd';
             }
 
             return 'n';

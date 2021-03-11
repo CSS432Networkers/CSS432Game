@@ -155,11 +155,8 @@ public class Player_Client
      *  Return
      *  returns an int, 0 if the connection is successful and -1 if the connection has failed
      **/
-    public int startRemote()
+    public int startRemote(string addr)
     {
-        //take server name input
-        Console.WriteLine("Input Server Name: (ex: csslab11.uwb.edu)");
-        string temp = Console.ReadLine();
 
         IPHostEntry hostEntry = null;
 
@@ -167,7 +164,7 @@ public class Player_Client
         try
         {
             // Get host related information.
-            hostEntry = Dns.GetHostEntry(temp);
+            hostEntry = Dns.GetHostEntry(addr);
 
         }
         catch (SocketException e)
@@ -410,8 +407,12 @@ public class Player_Client
 
         //if message type w, close the socket and return the board
         else if (playerBoard[0] == 'w')
+        {     
+            clientSocket.Close();
+            return returnBoard;
+        }
+        else if(playerBoard[0] == 'd')
         {
-            
             clientSocket.Close();
             return returnBoard;
         }
@@ -431,6 +432,32 @@ public class Player_Client
 
         //specify that this is a win message
         convert[0] = 'w';
+        convert[1] = Convert.ToChar(sendNum);
+        sendNum++;
+
+        //populate the message with the board values
+        int index = 0;
+        for (int i = 2; i < 11; i++)
+        {
+            convert[i] = board[index];
+            index++;
+        }
+
+        //turn it into a byte array
+        byte[] message = Encoding.GetEncoding("UTF-8").GetBytes(convert);
+
+        //send the message to the server/opponent and close
+        clientSocket.Send(message, message.Length, 0);
+        clientSocket.Close();
+    }
+
+    public void sendDraw(char[] board)
+    {
+        //char array to convert board into a message
+        char[] convert = new char[11];
+
+        //specify that this is a win message
+        convert[0] = 'd';
         convert[1] = Convert.ToChar(sendNum);
         sendNum++;
 
