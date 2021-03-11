@@ -35,6 +35,8 @@ public class GameController : MonoBehaviour
     public PlayerColor activePlayerColor;
     public PlayerColor inactivePlayerColor;
 
+
+
     void Awake ()
     {
         SetGameControllerReferenceOnButtons();

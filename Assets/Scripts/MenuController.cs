@@ -1,44 +1,42 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using System;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading;
 
 public class MenuController : MonoBehaviour
 {
     // using SerializeField so that we can see these variables
     // in the Unity inspector while keeping them private
     [SerializeField] private GameObject MainMenuCanvas;
-    [SerializeField] private GameObject CreatingRoomCanvas;
-    [SerializeField] private GameObject WaitingCanvas;
-    [SerializeField] private GameObject JoiningRoomCanvas;
+    [SerializeField] private GameObject ServerWaitingCanvas;
+    [SerializeField] private GameObject ClientWaitingCanvas;
     [SerializeField] private GameObject GamePlayCanvas;
 
     [SerializeField] private GameObject WinCanvas;
     [SerializeField] private GameObject LoseCanvas;
     [SerializeField] private GameObject DrawCanvas;
 
+    public Text ServerIP;
+    public Text ServerPort;
+
     private string selectedRoom;
     private bool roomCreated = false;
 
     void Start() 
     {
-        MainMenuCanvas.SetActive(false);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
-        GamePlayCanvas.SetActive(true);
-        WinCanvas.SetActive(false);
-        LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false);
 
-        /* This is how the game should do after implementing the client and the server
         MainMenuCanvas.SetActive(true);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
+        ServerWaitingCanvas.SetActive(false);
+        ClientWaitingCanvas.SetActive(false);
         GamePlayCanvas.SetActive(false);
         WinCanvas.SetActive(false);
         LoseCanvas.SetActive(false);
-        DrawCanvas.SetActive(false); */
+        DrawCanvas.SetActive(false); 
     }
 
     //Contains methods in the main menu
@@ -46,19 +44,17 @@ public class MenuController : MonoBehaviour
     public void NewRoomButtonClicked()
     {
         MainMenuCanvas.SetActive(false);
-        CreatingRoomCanvas.SetActive(true);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);  
-        GamePlayCanvas.SetActive(false);
+        ServerWaitingCanvas.SetActive(true);
+        ClientWaitingCanvas.SetActive(false);  
+
+
 
     }
     public void JoinRoomButtonClicked()
     {
         MainMenuCanvas.SetActive(false);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(true);
-        GamePlayCanvas.SetActive(false);
+        ServerWaitingCanvas.SetActive(false);
+        ClientWaitingCanvas.SetActive(true);  
     }
     public void QuitButtonClicked()
     {
@@ -67,37 +63,20 @@ public class MenuController : MonoBehaviour
     }
 
     #region ButtonClicked
-    //==============================================================================
-    //When the player hit the Create Button in the creating room menu
-    public void CreateButtonClicked()
+    //This method runs when the server is hosting but the user press the back button
+    public void ServerBackButtonClicked()
     {
-        
-        //The user has selected to be the server
-        //TODO:
-        //Initialize the server
-        //Create a server with a random port number.
-        //Pair the room name with the port number so that the client can find the port
-        //from the room name.
-        //Set roomCreated to true
+        //close the connection first before going back to the main menu
 
-        if (roomCreated)
-        {
-            MainMenuCanvas.SetActive(true);
-            CreatingRoomCanvas.SetActive(false);
-            WaitingCanvas.SetActive(true);
-            JoiningRoomCanvas.SetActive(false);
-            GamePlayCanvas.SetActive(false);
-        }
+        MainMenuCanvas.SetActive(true);
+        ServerWaitingCanvas.SetActive(false);
     }
-
     //This method is used in some different menus,
     // It will prompt the player to the main menu
     public void BackButtonClicked()
     {
         MainMenuCanvas.SetActive(true);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
+        ClientWaitingCanvas.SetActive(false);  
         GamePlayCanvas.SetActive(false);
     }
     // This is basically like the Back button but we need to close the client and server 
@@ -110,9 +89,6 @@ public class MenuController : MonoBehaviour
 
         //If the the result has been set, skip to this part.
         MainMenuCanvas.SetActive(true);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
         GamePlayCanvas.SetActive(false);
     }
 
@@ -120,11 +96,7 @@ public class MenuController : MonoBehaviour
     public void ExitButtonClicked()
     {
         MainMenuCanvas.SetActive(true);
-        CreatingRoomCanvas.SetActive(false);
-        WaitingCanvas.SetActive(false);
-        JoiningRoomCanvas.SetActive(false);
         GamePlayCanvas.SetActive(false);
-
         WinCanvas.SetActive(false);
         LoseCanvas.SetActive(false);
         DrawCanvas.SetActive(false);
@@ -134,7 +106,7 @@ public class MenuController : MonoBehaviour
     //Contains methods in the joining room menu
     //Room list will only show rooms that are available to join.
     //==================================================
-    public void JoinButtonClicked()
+    public void ConnectButtonClicked()
     {
         //The example room list is just for demonstration purpose, 
         //I'm afraid there no further implementation can be done using lower level networking implementation
