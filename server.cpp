@@ -20,9 +20,6 @@ const int MAXSIZE = 11;   //max databuf size
 int clientSock = 0;
 int hostSock = 0;
 
-bool clientSockStat = true;
-bool hostSockStat = true;
-
 const char* portnum;
 
 using namespace std;
@@ -73,21 +70,25 @@ void *readData(void* status)
                 databuf[0] = 'e';
                 write(clientSock, databuf, MAXSIZE);
                 cout << "client disconnected" << endl;
+                close(hostSock);
+                close(clientSock);
                 break;
             }
 
             readSize = 0;
 
-            cout << "\nrecieved data from client" << endl;
-
             write(hostSock, databuf, MAXSIZE);
-            cout << "sent data to host" << endl;
+
             if(databuf[0] == 'w')
             {
-                close(clientSock);
                 close(hostSock);
-                clientSockStat = false;
-                hostSockStat = false;
+                close(clientSock);
+                break;
+            }
+            else if(databuf[0] == 'd')
+            {
+                close(hostSock);
+                close(clientSock);
                 break;
             }
 
@@ -114,20 +115,25 @@ void *readData(void* status)
                 databuf[0] = 'e';
                 write(clientSock, databuf, MAXSIZE);
                 cout << "host disconnected" << endl;
+                close(hostSock);
+                close(clientSock);
                 break;
             }
+            
             readSize = 0;
- 
-            cout << "recieved data from host" << endl;
 
             write(clientSock, databuf, MAXSIZE);
-            cout << "sent data to client" << endl;
+
             if(databuf[0] == 'w')
             {
-                close(clientSock);
                 close(hostSock);
-                clientSockStat = false;
-                hostSockStat = false;
+                close(clientSock);
+                break;
+            }
+            else if(databuf[0] == 'd')
+            {
+                close(hostSock);
+                close(clientSock);
                 break;
             }
 
@@ -203,15 +209,15 @@ int main()
 
     //----------------------------begin connection loop-------------------------------
 
-    bool hostConn = false;
-
+    int hostConn = 0;
+    pthread_t hostThread;
+    pthread_t clientThread;
     //loop while waiting for new connection
     while(true)
     {
         int pthreadStatus = 0;
-        pthread_t newThread;
 
-        if(hostConn == false)
+        if(hostConn == 0)
         {
             cout << "waiting for host" << endl;
             //create a newSD when accepting a connection
@@ -226,12 +232,12 @@ int main()
 
             int hostStatus = 0;
             //if the connection completes, create a new thread and begin the data read/return process, passing through the SD
-            pthreadStatus = pthread_create(&newThread, NULL, readData, (void*)&hostStatus);
+            pthreadStatus = pthread_create(&hostThread, NULL, readData, (void*)&hostStatus);
             cout << "host connected" << endl;
-            hostConn = true;
+            hostConn = 1;
             continue;
         }
-        else
+        else if(hostConn == 1)
         {
             cout << "waiting for client" << endl;
             clientSock = accept(serverSD, (struct sockaddr*) &clientAddr, &clientAddrSize);
@@ -245,8 +251,9 @@ int main()
 
             int clientStatus = 1;
             //if the connection completes, create a new thread and begin the data read/return process, passing through the SD
-            pthreadStatus = pthread_create(&newThread, NULL, readData, (void*)&clientStatus);
+            pthreadStatus = pthread_create(&clientThread, NULL, readData, (void*)&clientStatus);
             cout << "client connected" << endl;
+            hostConn = 2;
             continue;
         }
 
@@ -263,15 +270,12 @@ int main()
             error("Thread failed to start");
         }
 
-        if(clientSockStat == false && hostSockStat == false)
-        {
-            cout << "Server Closing" << endl;
-            break;
-        }
-
-        //join the thread after readData finishes to save resources.
-        pthread_join(newThread, NULL);
+        //cout << clientSock << " " << hostSock << endl;
+        
     }
+    //join the thread after it finishes to save resources.
+    pthread_join(clientThread, NULL);
+    pthread_join(hostThread, NULL);
 
     //finish
     return 0;
