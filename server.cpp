@@ -14,11 +14,12 @@
 #include <iostream>
 #include <thread>
 
-const int N = 2;            //connecttion request limit
+const int N = 10;         //connecttion request limit
 const int MAXSIZE = 11;   //max databuf size
 
-int clientSock = 0;
-int hostSock = 0;
+//5 rooms each holds 2 sockets, one for each player
+int rooms[5][2];
+int tempHolders[10];
 
 const char* portnum;
 
@@ -34,19 +35,90 @@ void error(const char *msg)
     exit(0);
 }
 
+//function to see if a room has 2 players in it
+bool isOpen(int roomNum)
+{
+    if(rooms[roomNum][0] != 0 && rooms[roomNum][1] != 0)
+    {
+        return false;
+    }
+    return true;
+}
+
+int nextEmptyTemp()
+{
+    for(int i = 0; i < 10; i++)
+    {
+        if(tempHolders[i] == 0)
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 //readData() acts as the thread to run the data read and response to the client
 //it is called when a new thread is created on main, which is created on new connections.
-//it takes in the SD and interacts with it to receive the data and send back the count
-//of reads that it has done.
-void *readData(void* status)
+//it takes in the SD and interacts with it to receive the data
+void* readData(void* details)
 {
-    int thisStatus = *(int*)status;
+    //cout << "this thread has room" << details[0] << " and status " << details[1];
+    //int thisStatus = *(int*)status;
+    int tempIndex = *(int*)details;
+    int thisSock = tempHolders[tempIndex];
+    int otherSock = -1;
 
-    int readSize = 0;
+    //int readSize = 0;
+
+    //make a message and specify this is a room list
+    char message[11];
+    message[0] = 'r';
+    int index = 1;
+
+    for(int i = 0; i < 5; i++)
+    {
+        //if the room is open, add to message
+        if(isOpen(i) == true)
+        {
+            message[index] = '0' + i;
+            index++;
+        }
+    }
+
+    //cout << "sent room list to user" << endl;    
+    write(thisSock, message, MAXSIZE);
+    read(thisSock, message, MAXSIZE);
+    //cout <<"received room selection" << endl;
+
+    int roomChoice = (message[1] - '0') - 1;
+    int thisStatus = 0;
+
+    if(rooms[roomChoice][0] != 0)
+    {
+        cout << "socket " << thisSock << " is client" << endl;
+        otherSock = rooms[roomChoice][0];
+        thisStatus = 1;
+        tempHolders[tempIndex] = 0;
+        rooms[roomChoice][1] = thisSock;
+    }
+    else
+    {
+        cout << "socket " << thisSock << " is host" << endl;
+        tempHolders[tempIndex] = 0;
+        rooms[roomChoice][0] = thisSock;
+        otherSock = rooms[roomChoice][1];
+        while(otherSock == 0)
+        {
+            otherSock = rooms[roomChoice][1];
+        }
+    }
+
+    thisSock = rooms[roomChoice][1];
+    otherSock = rooms[roomChoice][0];
 
     while(true)
     {
-        if(clientSock == 0 || hostSock == 0)
+        if(thisSock == 0 || otherSock == 0)
         {
             //cout << hostSock << " " << thisStatus << endl;
             continue;
@@ -55,10 +127,11 @@ void *readData(void* status)
         {
             char databuf[MAXSIZE];             //databuf array for incoming data
             int retryCount = 0;
+            int readSize = 0;
             while(readSize != 11)
             {
                 retryCount++;
-                readSize = read(clientSock, databuf, MAXSIZE);
+                readSize = read(otherSock, databuf, MAXSIZE);
                 if(retryCount >= 3)
                 {
                     break;
@@ -67,28 +140,34 @@ void *readData(void* status)
 
             if(retryCount >= 3)
             {
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
                 databuf[0] = 'e';
-                write(clientSock, databuf, MAXSIZE);
+                write(otherSock, databuf, MAXSIZE);
                 cout << "client disconnected" << endl;
-                close(hostSock);
-                close(clientSock);
+                close(thisSock);
+                close(otherSock);
                 break;
             }
 
             readSize = 0;
 
-            write(hostSock, databuf, MAXSIZE);
+            write(thisSock, databuf, MAXSIZE);
 
             if(databuf[0] == 'w')
             {
-                close(hostSock);
-                close(clientSock);
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
+                close(thisSock);
+                close(otherSock);
                 break;
             }
             else if(databuf[0] == 'd')
             {
-                close(hostSock);
-                close(clientSock);
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
+                close(thisSock);
+                close(otherSock);
                 break;
             }
 
@@ -96,13 +175,14 @@ void *readData(void* status)
         }
         else if(thisStatus == 0)
         {
+
             char databuf[MAXSIZE];             //databuf array for incoming data
             int retryCount = 0;
-
+            int readSize = 0;
             while(readSize != 11)
             {
                 retryCount++;
-                readSize = read(hostSock, databuf, MAXSIZE);
+                readSize = read(thisSock, databuf, MAXSIZE);
 
                 if(retryCount >= 3)
                 {
@@ -113,35 +193,40 @@ void *readData(void* status)
             if(retryCount >= 3)
             {
                 databuf[0] = 'e';
-                write(clientSock, databuf, MAXSIZE);
+                write(otherSock, databuf, MAXSIZE);
                 cout << "host disconnected" << endl;
-                close(hostSock);
-                close(clientSock);
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
+                close(thisSock);
+                close(otherSock);
                 break;
             }
             
             readSize = 0;
 
-            write(clientSock, databuf, MAXSIZE);
+            write(otherSock, databuf, MAXSIZE);
 
             if(databuf[0] == 'w')
             {
-                close(hostSock);
-                close(clientSock);
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
+                close(thisSock);
+                close(otherSock);
                 break;
             }
             else if(databuf[0] == 'd')
             {
-                close(hostSock);
-                close(clientSock);
+                rooms[roomChoice][0] = 0;
+                rooms[roomChoice][1] = 0;
+                close(thisSock);
+                close(otherSock);
                 break;
             }
 
             continue;
         }
     }
-
-    return 0;
+    return nullptr;
 }
 
 //main() is the main entry point for the server. It takes in the params portNumber
@@ -193,7 +278,7 @@ int main()
         close(serverSD);
     }
 
-    //listen to up to 2 connection requests
+    //listen to up to 20 connection requests
     int listenStatus = listen(serverSD, N);
 
     //if the listen status fails, exit 
@@ -208,57 +293,29 @@ int main()
     socklen_t clientAddrSize = sizeof(clientAddr);
 
     //----------------------------begin connection loop-------------------------------
-
+    
     int hostConn = 0;
-    pthread_t hostThread;
-    pthread_t clientThread;
+    pthread_t newThread;
+
     //loop while waiting for new connection
     while(true)
     {
+        pthread_t newThread;
         int pthreadStatus = 0;
 
-        if(hostConn == 0)
-        {
-            cout << "waiting for host" << endl;
-            //create a newSD when accepting a connection
-            hostSock = accept(serverSD, (struct sockaddr*) &clientAddr, &clientAddrSize);
-            
-            //if the SD fails, print the failure but continue
-            if(clientSock == -1 || hostSock == -1)
-            {
-                printf("\nFailed to connect to client\n");
-                continue;
-            }
+        //wait for a player to connect
+        int tempSock = accept(serverSD, (struct sockaddr*) &clientAddr, &clientAddrSize);      
+        
+        //get next empty temp spot
+        int tempIndex = nextEmptyTemp();
 
-            int hostStatus = 0;
-            //if the connection completes, create a new thread and begin the data read/return process, passing through the SD
-            pthreadStatus = pthread_create(&hostThread, NULL, readData, (void*)&hostStatus);
-            cout << "host connected" << endl;
-            hostConn = 1;
-            continue;
-        }
-        else if(hostConn == 1)
-        {
-            cout << "waiting for client" << endl;
-            clientSock = accept(serverSD, (struct sockaddr*) &clientAddr, &clientAddrSize);
-            
-            //if the SD fails, print the failure but continue
-            if(clientSock == -1 || hostSock == -1)
-            {
-                printf("\nFailed to connect to client\n");
-                continue;
-            }
+        //put player socket into temp holders
+        tempHolders[tempIndex] = tempSock;
 
-            int clientStatus = 1;
-            //if the connection completes, create a new thread and begin the data read/return process, passing through the SD
-            pthreadStatus = pthread_create(&clientThread, NULL, readData, (void*)&clientStatus);
-            cout << "client connected" << endl;
-            hostConn = 2;
-            continue;
-        }
+        pthreadStatus = pthread_create(&newThread, NULL, readData, (void*)&tempIndex); 
 
         //if the SD fails, print the failure but continue
-        if(clientSock == -1 || hostSock == -1)
+        if(tempSock == -1)
         {
             printf("\nFailed to connect to client\n");
             continue;
@@ -271,11 +328,9 @@ int main()
         }
 
         //cout << clientSock << " " << hostSock << endl;
-        
+        //pthread_join(newThread, NULL);
     }
-    //join the thread after it finishes to save resources.
-    pthread_join(clientThread, NULL);
-    pthread_join(hostThread, NULL);
+
 
     //finish
     return 0;

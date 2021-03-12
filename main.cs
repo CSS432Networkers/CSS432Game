@@ -108,6 +108,28 @@ namespace tictactoe_emergency
                     initStatus = client.startRemote(temp);
                     if (initStatus == 0)
                     {
+                        int[] rooms = client.recieveRooms();
+                        Console.WriteLine("What room would you like to choose?");
+                        for (int i = 0; i < rooms.Length; i++)
+                        {
+                            Console.WriteLine(rooms[i] + 1);
+                        }
+                        string roomChoice = "";
+
+                        while(true)
+                        {
+                            roomChoice = Console.ReadLine();
+                            if (int.Parse(roomChoice) > 5 || int.Parse(roomChoice) < 0)
+                            {
+                                Console.WriteLine("Bad Room Number");
+                                continue;
+                            }
+                            break;
+                        }
+
+                        client.sendRoom(roomChoice[0]);
+
+                        Console.WriteLine("Game Started");
                         break;
                     }
 
@@ -207,11 +229,32 @@ namespace tictactoe_emergency
                     //take server name input
                     Console.WriteLine("Input Server Name: (ex: csslab11.uwb.edu)");
                     string temp = Console.ReadLine();
-
+ 
                     //if the status is successful, break
                     initStatus = host.startRemote(temp);
                     if (initStatus == 0)
                     {
+                        int[] rooms = host.recieveRooms();
+                        Console.WriteLine("What room would you like to choose?");
+                        for (int i = 0; i < rooms.Length; i++)
+                        {
+                            Console.WriteLine(rooms[i] + 1);
+                        }
+                        string roomChoice = "";
+
+                        while (true)
+                        {
+                            roomChoice = Console.ReadLine();
+                            if (int.Parse(roomChoice) > 5 || int.Parse(roomChoice) < 0)
+                            {
+                                Console.WriteLine("Bad Room Number");
+                                continue;
+                            }
+                            break;
+                        }
+
+                        host.sendRoom(roomChoice[0]);
+
                         Console.WriteLine("Game Started");
                         break;
                     }

@@ -421,6 +421,71 @@ public class Player_Client
         return returnBoard;
     }
 
+    public int[] recieveRooms()
+    {
+        //string to save data to from message buff
+        string data = null;
+        byte[] message = new byte[256];
+
+        //counter for amount of retries to recieve
+        int retryCount = 0;
+
+        //wait for data
+        while (true)
+        {
+            //sleep to wait for travel
+            Thread.Sleep(1000);
+
+            //increment retry on every attempt to recieve
+            retryCount++;
+
+            int numByte = clientSocket.Receive(message);
+
+            //save the data 
+            data += Encoding.ASCII.GetString(message,
+                                        0, numByte);
+
+            //if we've retried 3 times, return null
+            if (retryCount == 3)
+            {
+                return null;
+            }
+
+            //once we've gotten all the data, break
+            if (data.Length == 11)
+                break;
+
+        }
+        //if the message recieved is a room list
+        if(data[0] == 'r')
+        {
+            char[] roomList = data.ToCharArray();
+            int[] roomsAvailable = new int[5];
+            int listIndex = 1;
+
+            while(roomList[listIndex] != '\0')
+            {
+                // turn char into int and add to list to return
+                roomsAvailable[listIndex - 1] = roomList[listIndex] - '0';
+                listIndex++;
+
+            }
+            return roomsAvailable;
+        }
+        return null;
+
+    }
+
+    public void sendRoom(char roomChoice)
+    {
+        char[] choice = new char[11];
+        choice[0] = 'r';
+        choice[1] = roomChoice;
+
+        byte[] message = Encoding.GetEncoding("UTF-8").GetBytes(choice);
+        clientSocket.Send(message, choice.Length, 0);
+    }
+
     /*
      * sendWin
      * function to send a message with a 'w' type message, specifying that the user has won
