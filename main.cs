@@ -380,7 +380,7 @@ namespace tictactoe_emergency
 
         private static string createDisplay()
         {
-            string retVal = $"";
+            string retVal = "";
             int index = 1;
             for(int i = 0; i < 3; i++)
             {
@@ -420,9 +420,10 @@ namespace tictactoe_emergency
 
             Console.WriteLine(boardDisplay);
             string given = Console.ReadLine();
-
+            int givenInt = 0;
+            bool isInt = Int32.TryParse(given, out givenInt);
             //take user input and check if it is an int
-            if (Int32.TryParse(given, out int givenInt))
+            if (isInt == true)
             {
                 if((givenInt - 1) > 8)
                 {
