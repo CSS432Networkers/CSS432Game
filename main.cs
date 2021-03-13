@@ -11,39 +11,45 @@ namespace tictactoe_emergency
         static void Main(string[] args)
         {
 
-            Console.WriteLine("Host(1) or Player(2)?");
+            while(true)
+            {
+                Console.WriteLine("Play(1) or Quit(2)?");
+                string playAgain = Console.ReadLine();
+
+                if(playAgain.Equals("1") == true)
+                {
+                    manageGame();
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        private static void manageGame()
+        {
+            Console.WriteLine("Host(1) or Player(2)? Quit(3)");
             string status = Console.ReadLine();
 
-            int choice = 3;
-
-            if(status.Equals("1", StringComparison.InvariantCultureIgnoreCase))
-            {
-                choice = 0;
-            }
-            else if(status.Equals("2", StringComparison.InvariantCultureIgnoreCase))
-            {
-                choice = 1;
-            }
-
-            if(choice == 0)
+            if (status.Equals("1", StringComparison.InvariantCultureIgnoreCase))
             {
                 Player_Client host = new Player_Client();
                 initBoard();
                 hostGame(host);
             }
-
-            else if (choice == 1)
+            else if (status.Equals("2", StringComparison.InvariantCultureIgnoreCase))
             {
                 Player_Client client = new Player_Client();
                 initBoard();
                 clientGame(client);
-            }
 
+            }
             else
             {
-                Console.WriteLine("Not Valid Input");
+                return;
             }
-
         }
 
         private static void initBoard()
