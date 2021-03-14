@@ -85,13 +85,41 @@ void* manageClient(void* details)
         if(isOpen(i) == true)
         {
             message[index] = '0' + i;
-            index++;
+            //if the room has no host connected, 2 spots open
+            if (rooms[i][0] == 0)
+            {
+                message[index + 1] = '2';
+            }
+            //if the room has a host but passed isOpen, that means 1 spot is open
+            else
+            {
+                message[index + 1] = '1';
+            }
+            index+=2;
         }
     }
 
     //send the room list to the client and wait for a response   
     write(thisSock, message, MAXSIZE);
-    read(thisSock, message, MAXSIZE);
+    int retryCount = 0;
+    int readSize = 0;
+    while (readSize != 11)
+    {
+        retryCount++;
+        readSize = read(thisSock, message, MAXSIZE);
+
+        if (retryCount >= 3)
+        {
+            cout << "Player Disconnected" << endl;
+            close(thisSock);
+            break;
+        }
+    }
+
+    if (retryCount >= 3)
+    {
+        return nullptr;
+    }
     
     //take the message and turn it into an int, then subtract 1 since the
     //room choice needs to be from 0-4 not 1-5

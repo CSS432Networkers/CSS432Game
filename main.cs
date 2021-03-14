@@ -149,9 +149,9 @@ namespace tictactoe_emergency
 
                         //display available rooms and ask for a choice
                         Console.WriteLine("What room would you like to choose?");
-                        for (int i = 0; i < rooms.Length; i++)
+                        for (int i = 0; i < rooms.Length; i += 2)
                         {
-                            Console.WriteLine("Room: " + rooms[i] + 1);
+                            Console.WriteLine("Room: " + (rooms[i] + 1) + " Slots Open: " + (rooms[i + 1]));
                         }
 
                         string roomChoice = "";
@@ -314,9 +314,9 @@ namespace tictactoe_emergency
                     {
                         int[] rooms = host.recieveRooms();
                         Console.WriteLine("What room would you like to choose?");
-                        for (int i = 0; i < rooms.Length; i++)
+                        for (int i = 0; i < rooms.Length; i+=2)
                         {
-                            Console.WriteLine(rooms[i] + 1);
+                            Console.WriteLine("Room: " + (rooms[i] + 1) + " Slots Open: " + (rooms[i+1]));
                         }
                         string roomChoice = "";
 

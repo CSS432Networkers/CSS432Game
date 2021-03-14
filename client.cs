@@ -463,16 +463,33 @@ public class Player_Client
         if(data[0] == 'r')
         {
             char[] roomList = data.ToCharArray();
-            int[] roomsAvailable = new int[5];
-            int listIndex = 1;
+            int[] roomsAvailable = new int[10];
+            int roomsCounted = 0;
 
-            while(roomList[listIndex] != '\0')
+            //copy the data over into rooms available
+            for (int i = 1; i < 11; i++)
             {
-                // turn char into int and add to list to return
-                roomsAvailable[listIndex - 1] = roomList[listIndex] - '0';
-                listIndex++;
-
+                if(roomList[i] != '\0')
+                {
+                    roomsAvailable[i - 1] = roomList[i] - '0';
+                    roomsCounted++;
+                }
             }
+
+            //if the rooms counted are less than the max amount of rooms, we have empty space
+            if(roomsCounted < 10)
+            {
+                //make temp an array just big enough for the rooms
+                int[] temp = new int[roomsCounted];
+
+                //loop through the array and copy the data then return temp
+                for(int i = 0; i < roomsCounted; i++)
+                {
+                    temp[i] = roomsAvailable[i];
+                }
+                return temp;
+            }
+
             return roomsAvailable;
         }
         return null;
