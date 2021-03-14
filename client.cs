@@ -406,13 +406,16 @@ public class Player_Client
         }
 
         //if message type w, close the socket and return the board
-        else if (playerBoard[0] == 'w')
-        {     
-            clientSocket.Close();
-            return returnBoard;
-        }
-        else if(playerBoard[0] == 'd')
+        else if (playerBoard[0] == 'w' || playerBoard[0] == 'd')
         {
+            //send a w to let the server know that the loser must close too
+            char[] ack = new char[11];
+            ack[0] = 'w';
+            ack[1] = Convert.ToChar(recNum);
+
+            message = Encoding.GetEncoding("UTF-8").GetBytes(ack);
+
+            clientSocket.Send(message, message.Length, 0);
             clientSocket.Close();
             return returnBoard;
         }
