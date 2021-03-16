@@ -110,7 +110,7 @@ void* manageClient(void* details)
 
         if (retryCount >= 3)
         {
-            cout << "Player Disconnected" << endl;
+            cout << "Lobby player Disconnected" << endl;
             close(thisSock);
             break;
         }
@@ -131,7 +131,7 @@ void* manageClient(void* details)
     //if the room's first slot is not open, this thread is handling the non-host
     if(rooms[roomChoice][0] != 0)
     {
-        cout << "socket " << thisSock << " is client" << endl;
+        cout << "socket " << thisSock << " is client of room " << roomChoice << endl;
         otherSock = rooms[roomChoice][0];
 
         //this is a client/nonhost
@@ -143,7 +143,7 @@ void* manageClient(void* details)
     }
     else
     {
-        cout << "socket " << thisSock << " is host" << endl;
+        cout << "socket " << thisSock << " is host of room " << roomChoice << endl;
 
         //this is a host, empty the temp holder and update the room
         tempHolders[tempIndex] = 0;
@@ -202,8 +202,8 @@ void* manageClient(void* details)
                 rooms[roomChoice][0] = 0;
                 rooms[roomChoice][1] = 0;
                 databuf[0] = 'e';
-                write(otherSock, databuf, MAXSIZE);
-                cout << "client disconnected" << endl;
+                write(thisSock, databuf, MAXSIZE);
+                cout << "client of room " << roomChoice << " disconnected" << endl;
                 close(thisSock);
                 close(otherSock);
                 break;
@@ -217,7 +217,7 @@ void* manageClient(void* details)
             //if the message recieved is a win or draw, close this socket and empty the room
             if (databuf[0] == 'w' || databuf[0] == 'd')
             {
-                cout << "client disconnected from win" << endl;
+                cout << "client of " << roomChoice << " disconnected from end game" << endl;
                 rooms[roomChoice][0] = 0;
                 rooms[roomChoice][1] = 0;
                 close(thisSock);
@@ -249,7 +249,7 @@ void* manageClient(void* details)
             {
                 databuf[0] = 'e';
                 write(otherSock, databuf, MAXSIZE);
-                cout << "host disconnected" << endl;
+                cout << "host of room " << roomChoice << " disconnected" << endl;
                 rooms[roomChoice][0] = 0;
                 rooms[roomChoice][1] = 0;
                 close(thisSock);
@@ -263,7 +263,7 @@ void* manageClient(void* details)
 
             if(databuf[0] == 'w' || databuf[0] == 'd')
             {
-                cout << "host disconnected from win" << endl;
+                cout << "host of " << roomChoice << "  disconnected from end game" << endl;
                 rooms[roomChoice][0] = 0;
                 rooms[roomChoice][1] = 0;
                 close(otherSock);
