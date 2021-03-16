@@ -7,6 +7,6 @@ Created by Team Networkers: Jorge Alvarez, Nathan Ngo, and Johnny Pham
 This is an implementation of Tic-Tac-Toe using Unity and implementing online multiplayer using C# sockets.
 
 ## Unity Project
-Link to Unity project below, has working offline play.
+Link to Unity project below, has working offline local play.
 
 https://simmer.io/@johnnykvp/tic-tac-toe
