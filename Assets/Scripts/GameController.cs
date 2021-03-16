@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 [System.Serializable]
 public class Player
@@ -202,5 +203,11 @@ public class GameController : MonoBehaviour
         {
             buttonList[i].GetComponentInParent<Button>().interactable = toggle;
         }
+    }
+
+    public void quitGame()
+    {
+        Debug.Log("Quit game.");
+        SceneManager.LoadScene("Menu");
     }
 }
